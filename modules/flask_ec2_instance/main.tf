@@ -1,6 +1,10 @@
-provider "aws" {
-  region  = "us-west-1"
-  profile = "capstone-team4"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
 }
 
 data "aws_ami" "ubuntu" {
@@ -72,44 +76,85 @@ resource "aws_security_group" "flask_sg" {
 }
 
 resource "aws_instance" "flask_server" {
-  ami = data.aws_ami.ubuntu.id
-  instance_type = "t2.micro"
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.flask_sg.id]
-  key_name = aws_key_pair.generated_key.key_name
+  key_name               = aws_key_pair.generated_key.key_name
   tags = {
     Name = "Flask-Server"
   }
+
   user_data = <<-EOF
 #!/bin/bash
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 echo "Starting user data script execution"
+
+# Log the webapp_public_ip
+echo "webapp_public_ip is: ${var.webapp_public_ip}"
+
 apt-get update
 apt-get install -y docker.io
 echo "Docker installed"
 systemctl start docker
 systemctl enable docker
-echo "Docker service started and enabled"
+
+# Wait for Docker to be fully operational
+echo "Waiting for Docker service to be fully operational..."
+timeout=300  # 5 minutes timeout
+end=$((SECONDS+timeout))
+
+while [ $SECONDS -lt $end ]; do
+    if docker info >/dev/null 2>&1; then
+        echo "Docker is up and running"
+        break
+    else
+        echo "Waiting for Docker to start... ($(($end-SECONDS)) seconds left)"
+        sleep 5
+    fi
+done
+
+if ! docker info >/dev/null 2>&1; then
+    echo "Docker failed to start within the allotted time" >&2
+    exit 1
+fi
+
 sudo usermod -aG docker ubuntu
 echo "Added ubuntu user to docker group"
+
 docker pull jamesdrabinsky/flask-frontend-app:latest
 echo "Docker image pulled"
+
 # Create a directory for the Dockerfile
 mkdir -p /app
 cd /app
+
 # Create the Dockerfile
 cat <<EOT > Dockerfile
 FROM jamesdrabinsky/flask-frontend-app:latest
 ENV CH_HOST=${var.webapp_public_ip}
 EOT
 echo "Dockerfile created"
+
 # Build the new image
 docker build -t flask-app-with-env .
 echo "New Docker image built"
+
 # Run the new image
 docker run -d -p 5000:5000 --name flask-app flask-app-with-env
 echo "Flask app container started"
+
 echo "User data script execution completed"
 EOF
+
+  provisioner "local-exec" {
+    command = <<EOT
+      while ! nc -zv ${var.webapp_public_ip} 8123; do
+        echo "Waiting for ClickHouse to be available..."
+        sleep 2
+      done
+      echo "ClickHouse is up and running!"
+    EOT
+  }
 }
 
 output "private_key" {
@@ -122,6 +167,5 @@ output "private_key" {
 # docker exec -it flask-app
 # echo "CH_HOST=${var.webapp_public_ip}" >> .env
 
-
-
-
+# sudo cat /var/log/user-data.log
+# sudo docker logs flask-app
