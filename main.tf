@@ -13,6 +13,11 @@ module "clickhouse_ec2_instance" {
   source = "./modules/clickhouse_ec2_instance"
 }
 
+module "flask_ec2_instance" {
+  source = "./modules/flask_ec2_instance"
+  webapp_public_ip = module.clickhouse_ec2_instance.webapp_public_ip
+}
+
 module "lambda_function" {
   source           = "./modules/lambda"
   webapp_public_ip = module.clickhouse_ec2_instance.webapp_public_ip
