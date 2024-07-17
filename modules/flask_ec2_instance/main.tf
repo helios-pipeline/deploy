@@ -37,7 +37,7 @@ resource "local_file" "private_key" {
 resource "aws_security_group" "flask_sg" {
   name        = "flask-security-group"
   description = "Security group for flask EC2 instance"
-  
+
   ingress {
     from_port   = 5000
     to_port     = 5000
@@ -81,19 +81,39 @@ resource "aws_instance" "flask_server" {
     Name = "Flask-Server"
   }
 
-  user_data = <<-EOF
-            #!/bin/bash
-            apt-get update
-            apt-get install -y docker.io
-            systemctl start docker
-            systemctl enable docker
-            sudo usermod -aG docker ubuntu
-            docker pull jamesdrabinsky/helios-clickhouse-amd:dev
-            docker run -d --name my-clickhouse-container --ulimit nofile=262144:262144 -p 8123:8123 -p 8443:8443 -p 9000:9000 -p 9440:9440 jamesdrabinsky/helios-clickhouse-amd:dev
-            EOF
-  }
+  user_data = <<-EOT
+  #!/bin/bash
+  apt-get update
+  apt-get install -y docker.io
+  systemctl start docker
+  systemctl enable docker
+  sudo usermod -aG docker ubuntu
+  docker pull jamesdrabinsky/flask-frontend-app:latest
+
+  cat << EOF > Dockerfile
+  FROM jamesdrabinsky/flask-frontend-app:latest
+  ENV CH_HOST=${var.webapp_public_ip}
+  EOF
+
+  # Build a new image with the environment variable
+  docker build -t flask-app-with-env .
+
+  # Run the new image
+  docker run -d -p 5000:5000 --name flask-app flask-app-with-env
+
+  # Clean up
+  rm Dockerfile
+  EOT
+}
 
 output "private_key" {
   value     = tls_private_key.ssh_key.private_key_pem
   sensitive = true
 }
+
+
+
+# docker run -d -p 5000:5000 --name flask-app jamesdrabinsky/flask-frontend-app:latest
+
+# docker exec -it flask-app
+# echo "CH_HOST=${var.webapp_public_ip}" >> .env
