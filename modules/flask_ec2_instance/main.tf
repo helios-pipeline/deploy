@@ -72,38 +72,44 @@ resource "aws_security_group" "flask_sg" {
 }
 
 resource "aws_instance" "flask_server" {
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = "t2.micro"
+  ami = data.aws_ami.ubuntu.id
+  instance_type = "t2.micro"
   vpc_security_group_ids = [aws_security_group.flask_sg.id]
-  key_name               = aws_key_pair.generated_key.key_name
-
+  key_name = aws_key_pair.generated_key.key_name
   tags = {
     Name = "Flask-Server"
   }
-
-  user_data = <<-EOT
-  #!/bin/bash
-  apt-get update
-  apt-get install -y docker.io
-  systemctl start docker
-  systemctl enable docker
-  sudo usermod -aG docker ubuntu
-  docker pull jamesdrabinsky/flask-frontend-app:latest
-
-  cat << EOF > Dockerfile
-  FROM jamesdrabinsky/flask-frontend-app:latest
-  ENV CH_HOST=${var.webapp_public_ip}
-  EOF
-
-  # Build a new image with the environment variable
-  docker build -t flask-app-with-env .
-
-  # Run the new image
-  docker run -d -p 5000:5000 --name flask-app flask-app-with-env
-
-  # Clean up
-  rm Dockerfile
-  EOT
+  user_data = <<-EOF
+#!/bin/bash
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+echo "Starting user data script execution"
+apt-get update
+apt-get install -y docker.io
+echo "Docker installed"
+systemctl start docker
+systemctl enable docker
+echo "Docker service started and enabled"
+sudo usermod -aG docker ubuntu
+echo "Added ubuntu user to docker group"
+docker pull jamesdrabinsky/flask-frontend-app:latest
+echo "Docker image pulled"
+# Create a directory for the Dockerfile
+mkdir -p /app
+cd /app
+# Create the Dockerfile
+cat <<EOT > Dockerfile
+FROM jamesdrabinsky/flask-frontend-app:latest
+ENV CH_HOST=${var.webapp_public_ip}
+EOT
+echo "Dockerfile created"
+# Build the new image
+docker build -t flask-app-with-env .
+echo "New Docker image built"
+# Run the new image
+docker run -d -p 5000:5000 --name flask-app flask-app-with-env
+echo "Flask app container started"
+echo "User data script execution completed"
+EOF
 }
 
 output "private_key" {
@@ -111,9 +117,11 @@ output "private_key" {
   sensitive = true
 }
 
-
-
 # docker run -d -p 5000:5000 --name flask-app jamesdrabinsky/flask-frontend-app:latest
 
 # docker exec -it flask-app
 # echo "CH_HOST=${var.webapp_public_ip}" >> .env
+
+
+
+
