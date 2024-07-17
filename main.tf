@@ -23,7 +23,14 @@ module "flask_ec2_instance" {
   depends_on       = [module.clickhouse_ec2_instance]
 }
 
+module "dynamodb_instance" {
+  source = "./modules/dynamodb_instance"
+}
+
 module "lambda_function" {
   source           = "./modules/lambda"
   webapp_public_ip = module.clickhouse_ec2_instance.webapp_public_ip
 }
+
+
+ 
