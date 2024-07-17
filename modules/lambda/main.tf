@@ -9,7 +9,7 @@ resource "aws_lambda_function" "kinesis_to_clickhouse" {
   role          = aws_iam_role.lambda_role.arn
   description   = "handler function for sending kinesis data to clickhouse"
   handler       = "lambda_function.lambda_handler"
-  runtime       = "python3.11"
+  runtime       = "python3.12"
   # publish       = true
 
   source_code_hash = filebase64sha256("lambda_function.zip")
@@ -96,7 +96,7 @@ resource "aws_lambda_layer_version" "layer_content" {
   filename   = "layer_content.zip"
   layer_name = "layer_content"
 
-  compatible_runtimes = ["python3.11"]
+  compatible_runtimes = ["python3.12"]
 }
 
 # resource "aws_lambda_layer_version" "dotenv" {
