@@ -1,1 +1,6 @@
 venv
+.env
+python/*
+layer_content.zip
+.terraform
+create_layer
