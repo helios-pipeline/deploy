@@ -123,7 +123,7 @@ fi
 sudo usermod -aG docker ubuntu
 echo "Added ubuntu user to docker group"
 
-docker pull jamesdrabinsky/flask-frontend-app:latest
+docker pull kuanchiliao/helios-flask-amd:dev
 echo "Docker image pulled"
 
 # Create a directory for the Dockerfile
@@ -132,7 +132,7 @@ cd /app
 
 # Create the Dockerfile
 cat <<EOT > Dockerfile
-FROM jamesdrabinsky/flask-frontend-app:latest
+FROM kuanchiliao/helios-flask-amd:dev
 ENV CH_HOST=${var.webapp_public_ip}
 EOT
 echo "Dockerfile created"
