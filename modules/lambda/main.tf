@@ -5,7 +5,7 @@ provider "aws" {
 
 resource "aws_lambda_function" "kinesis_to_clickhouse" {
   filename      = "lambda_function.zip"
-  function_name = "kinesis-to-clickhouse"
+  function_name = "kinesis-to-clickhouse-dev"
   role          = aws_iam_role.lambda_role.arn
   description   = "handler function for sending kinesis data to clickhouse"
   handler       = "lambda_function.lambda_handler"
@@ -13,6 +13,7 @@ resource "aws_lambda_function" "kinesis_to_clickhouse" {
   # publish       = true
 
   source_code_hash = filebase64sha256("lambda_function.zip")
+  timeout       = 60
 
   environment {
     variables = {
@@ -44,13 +45,13 @@ resource "aws_security_group" "lambda_sg" {
   }
 }
 
-resource "aws_lambda_event_source_mapping" "kinesis_trigger" {
-  event_source_arn  = "arn:aws:kinesis:us-west-1:767397811841:stream/MyKinesisDataStream"
-  function_name     = aws_lambda_function.kinesis_to_clickhouse.arn
-  starting_position = "LATEST"
-  batch_size        = 3
-  enabled           = true
-}
+# resource "aws_lambda_event_source_mapping" "kinesis_trigger" {
+#   event_source_arn  = "arn:aws:kinesis:us-west-1:767397811841:stream/MyKinesisDataStream"
+#   function_name     = aws_lambda_function.kinesis_to_clickhouse.arn
+#   starting_position = "LATEST"
+#   batch_size        = 3
+#   enabled           = true
+# }
 
 resource "aws_iam_policy" "lambda_layer_policy" {
   name        = "lambda_layer_policy"
