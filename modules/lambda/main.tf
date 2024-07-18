@@ -1,6 +1,10 @@
-provider "aws" {
-  region  = "us-west-1"
-  profile = "capstone-team4"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
 }
 
 resource "aws_lambda_function" "kinesis_to_clickhouse" {
@@ -17,7 +21,7 @@ resource "aws_lambda_function" "kinesis_to_clickhouse" {
 
   environment {
     variables = {
-      CLICKHOUSE_HOST = var.webapp_public_ip
+      CLICKHOUSE_HOST = var.clickhouse_public_ip
       CLICKHOUSE_PORT = "8123"
     }
   }
@@ -108,6 +112,11 @@ resource "aws_iam_role_policy_attachment" "kinesis_policy" {
 
 resource "aws_iam_role_policy_attachment" "dynamodb_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+  role       = aws_iam_role.lambda_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_vpc_access_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
   role       = aws_iam_role.lambda_role.name
 }
 
