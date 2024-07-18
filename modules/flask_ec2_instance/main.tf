@@ -41,6 +41,7 @@ resource "local_file" "private_key" {
 resource "aws_security_group" "flask_sg" {
   name        = "flask-security-group"
   description = "Security group for flask EC2 instance"
+  vpc_id      = var.vpc_id
 
   ingress {
     from_port   = 5000
@@ -79,7 +80,9 @@ resource "aws_instance" "flask_server" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.flask_sg.id]
+  subnet_id              = var.subnet_id
   key_name               = aws_key_pair.generated_key.key_name
+  associate_public_ip_address = true
   tags = {
     Name = "Flask-Server"
   }
@@ -89,8 +92,8 @@ resource "aws_instance" "flask_server" {
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 echo "Starting user data script execution"
 
-# Log the webapp_public_ip
-echo "webapp_public_ip is: ${var.webapp_public_ip}"
+# Log the clickhouse_public_ip
+echo "clickhouse_public_ip is: ${var.clickhouse_public_ip}"
 
 apt-get update
 apt-get install -y docker.io
@@ -121,7 +124,7 @@ fi
 sudo usermod -aG docker ubuntu
 echo "Added ubuntu user to docker group"
 
-docker pull jamesdrabinsky/flask-frontend-app:latest
+docker pull kuanchiliao/helios-flask-amd:dev
 echo "Docker image pulled"
 
 # Create a directory for the Dockerfile
@@ -130,8 +133,8 @@ cd /app
 
 # Create the Dockerfile
 cat <<EOT > Dockerfile
-FROM jamesdrabinsky/flask-frontend-app:latest
-ENV CH_HOST=${var.webapp_public_ip}
+FROM kuanchiliao/helios-flask-amd:dev
+ENV CH_HOST=${var.clickhouse_public_ip}
 EOT
 echo "Dockerfile created"
 
@@ -148,13 +151,28 @@ EOF
 
   provisioner "local-exec" {
     command = <<EOT
-      while ! nc -zv ${var.webapp_public_ip} 8123; do
+      while ! nc -zv ${var.clickhouse_public_ip} 8123; do
         echo "Waiting for ClickHouse to be available..."
         sleep 2
       done
       echo "ClickHouse is up and running!"
     EOT
   }
+
+  # provisioner "remote-exec" {
+  #   inline = [
+  #     "while ! nc -z ${var.clickhouse_public_ip} 8123; do echo 'Waiting for ClickHouse to be available...'; sleep 2; done",
+  #     "echo 'ClickHouse is up and running!'"
+  #   ]
+
+  #   connection {
+  #     type        = "ssh"
+  #     user        = "ubuntu"
+  #     private_key = tls_private_key.ssh_key.private_key_pem
+  #     host        = aws_instance.flask_server.public_ip
+  #   }
+  # }
+
 }
 
 output "private_key" {
@@ -162,10 +180,14 @@ output "private_key" {
   sensitive = true
 }
 
+output "flask_server_public_ip" {
+  value = aws_instance.flask_server.public_ip
+}
+
 # docker run -d -p 5000:5000 --name flask-app jamesdrabinsky/flask-frontend-app:latest
 
 # docker exec -it flask-app
-# echo "CH_HOST=${var.webapp_public_ip}" >> .env
+# echo "CH_HOST=${var.clickhouse_public_ip}" >> .env
 
 # sudo cat /var/log/user-data.log
 # sudo docker logs flask-app

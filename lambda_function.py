@@ -56,7 +56,7 @@ def lambda_handler(event, context):
 
             dynamodb_client = create_dynamodb_client()
             stream_id = record['eventSourceARN']
-            table_id = get_table_id(dynamodb_client, 'tables_streams', stream_id)
+            table_id = get_table_id(dynamodb_client, 'stream_table_map', stream_id)
             table_name = get_table_name(table_id)
             
             # Process the data

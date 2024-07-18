@@ -41,6 +41,7 @@ resource "local_file" "private_key" {
 resource "aws_security_group" "clickhouse_sg" {
   name        = "clickhouse-security-group"
   description = "Security group for Clickhouse EC2 instance"
+  vpc_id      = var.vpc_id
 
   ingress {
     from_port   = 8123
@@ -86,6 +87,7 @@ resource "aws_instance" "clickhouse_server" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.clickhouse_sg.id]
+  subnet_id              = var.subnet_id
   key_name               = aws_key_pair.generated_key.key_name
 
   tags = {
@@ -104,19 +106,19 @@ resource "aws_instance" "clickhouse_server" {
             EOF
 }
 
+
 output "private_key" {
   value     = tls_private_key.ssh_key.private_key_pem
   sensitive = true
 }
 
-# output "webapp_public_ip" {
+# output "clickhouse_public_ip" {
 #   value = aws_instance.web_app.public_ip
 # }
 
-output "webapp_public_ip" {
+output "clickhouse_public_ip" {
   value = aws_instance.clickhouse_server.public_ip
 }
-
 
 # docker exec -it clickhouse-server clickhouse-client -- to run the clickhouse client
 
