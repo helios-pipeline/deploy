@@ -41,6 +41,7 @@ resource "local_file" "private_key" {
 resource "aws_security_group" "flask_sg" {
   name        = "flask-security-group"
   description = "Security group for flask EC2 instance"
+  vpc_id      = var.vpc_id
 
   ingress {
     from_port   = 5000
@@ -79,6 +80,7 @@ resource "aws_instance" "flask_server" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.flask_sg.id]
+  subnet_id              = var.subnet_id
   key_name               = aws_key_pair.generated_key.key_name
   tags = {
     Name = "Flask-Server"

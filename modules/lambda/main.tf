@@ -24,6 +24,24 @@ resource "aws_lambda_function" "kinesis_to_clickhouse" {
   layers = [
     aws_lambda_layer_version.layer_content.arn
   ]
+
+  vpc_config {
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [aws_security_group.lambda_sg.id]
+  }
+}
+
+resource "aws_security_group" "lambda_sg" {
+  name        = "lambda-security-group"
+  description = "Security group for Lambda function"
+  vpc_id      = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 resource "aws_lambda_event_source_mapping" "kinesis_trigger" {
