@@ -5,3 +5,9 @@ layer_content.zip
 .terraform
 create_layer
 **/*.pem
+terraform_overview.sh
+terraform_project_overview.txt
+terraform_output.txt
+*.tfstate
+*.tfstate.*
+terraform.tfstate

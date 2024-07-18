@@ -106,19 +106,19 @@ resource "aws_instance" "clickhouse_server" {
             EOF
 }
 
+
 output "private_key" {
   value     = tls_private_key.ssh_key.private_key_pem
   sensitive = true
 }
 
-# output "webapp_public_ip" {
+# output "clickhouse_public_ip" {
 #   value = aws_instance.web_app.public_ip
 # }
 
-output "webapp_public_ip" {
+output "clickhouse_public_ip" {
   value = aws_instance.clickhouse_server.public_ip
 }
-
 
 # docker exec -it clickhouse-server clickhouse-client -- to run the clickhouse client
 

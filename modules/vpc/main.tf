@@ -30,38 +30,10 @@ resource "aws_subnet" "public" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.1.0/24"
   availability_zone = data.aws_availability_zones.available.names[0]
+  map_public_ip_on_launch = true  # Add this line
 
   tags = {
     Name = "Public Subnet"
-  }
-}
-
-resource "aws_subnet" "private" {
-  count             = 1
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = data.aws_availability_zones.available.names[1]
-
-  tags = {
-    Name = "Private Subnet"
-  }
-}
-
-resource "aws_eip" "nat" {
-  count = 1
-  domain = "vpc"
-
-  tags = {
-    Name = "NAT Gateway EIP"
-  }
-}
-
-resource "aws_nat_gateway" "main" {
-  allocation_id = aws_eip.nat[0].id
-  subnet_id     = aws_subnet.public[0].id
-
-  tags = {
-    Name = "Main NAT Gateway"
   }
 }
 
@@ -78,27 +50,9 @@ resource "aws_route_table" "public" {
   }
 }
 
-resource "aws_route_table" "private" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main[0].id
-  }
-
-  tags = {
-    Name = "Private Route Table"
-  }
-}
-
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public[0].id
   route_table_id = aws_route_table.public.id
-}
-
-resource "aws_route_table_association" "private" {
-  subnet_id      = aws_subnet.private[0].id
-  route_table_id = aws_route_table.private.id
 }
 
 data "aws_availability_zones" "available" {}
@@ -109,8 +63,4 @@ output "vpc_id" {
 
 output "public_subnet_ids" {
   value = aws_subnet.public[0].id
-}
-
-output "private_subnet_ids" {
-  value = aws_subnet.private[0].id
 }
