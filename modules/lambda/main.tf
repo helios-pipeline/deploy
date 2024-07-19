@@ -7,7 +7,7 @@ terraform {
   }
 }
 
-resource "aws_lambda_function" "kinesis_to_clickhouse" {
+resource "aws_lambda_function" "kinesis_to_clickhouse_dev" {
   filename      = "lambda_function.zip"
   function_name = "kinesis-to-clickhouse-dev"
   role          = aws_iam_role.lambda_role.arn
@@ -30,16 +30,11 @@ resource "aws_lambda_function" "kinesis_to_clickhouse" {
     aws_lambda_layer_version.layer_content.arn
   ]
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.lambda_sg.id]
-  }
 }
 
 resource "aws_security_group" "lambda_sg" {
   name        = "lambda-security-group"
   description = "Security group for Lambda function"
-  vpc_id      = var.vpc_id
 
   egress {
     from_port   = 0
@@ -48,14 +43,6 @@ resource "aws_security_group" "lambda_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-
-# resource "aws_lambda_event_source_mapping" "kinesis_trigger" {
-#   event_source_arn  = "arn:aws:kinesis:us-west-1:767397811841:stream/MyKinesisDataStream"
-#   function_name     = aws_lambda_function.kinesis_to_clickhouse.arn
-#   starting_position = "LATEST"
-#   batch_size        = 3
-#   enabled           = true
-# }
 
 resource "aws_iam_policy" "lambda_layer_policy" {
   name        = "lambda_layer_policy"
@@ -115,11 +102,6 @@ resource "aws_iam_role_policy_attachment" "dynamodb_policy" {
   role       = aws_iam_role.lambda_role.name
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_vpc_access_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-  role       = aws_iam_role.lambda_role.name
-}
-
 resource "aws_lambda_layer_version" "layer_content" {
   filename   = "layer_content.zip"
   layer_name = "layer_content"
@@ -146,3 +128,4 @@ resource "aws_lambda_layer_version" "layer_content" {
 # zip -r boto3_layer.zip ./boto3
 
 # zip -r lambda_function.zip lambda_function.py
+

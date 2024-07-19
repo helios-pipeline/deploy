@@ -41,7 +41,6 @@ resource "local_file" "private_key" {
 resource "aws_security_group" "clickhouse_sg" {
   name        = "clickhouse-security-group"
   description = "Security group for Clickhouse EC2 instance"
-  vpc_id      = var.vpc_id
 
   ingress {
     from_port   = 8123
@@ -86,9 +85,8 @@ resource "aws_security_group" "clickhouse_sg" {
 resource "aws_instance" "clickhouse_server" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t2.micro"
-  vpc_security_group_ids = [aws_security_group.clickhouse_sg.id]
-  subnet_id              = var.subnet_id
   key_name               = aws_key_pair.generated_key.key_name
+  vpc_security_group_ids = [aws_security_group.clickhouse_sg.id]
 
   tags = {
     Name = "ClickHouse-Server"
@@ -112,18 +110,7 @@ output "private_key" {
   sensitive = true
 }
 
-# output "clickhouse_public_ip" {
-#   value = aws_instance.web_app.public_ip
-# }
-
 output "clickhouse_public_ip" {
   value = aws_instance.clickhouse_server.public_ip
 }
 
-# docker exec -it clickhouse-server clickhouse-client -- to run the clickhouse client
-
-# WARNING: The requested image's platform (linux/arm64) does not match the detected host platform 
-# (linux/amd64/v3) and no specific platform was requested
-
-# docker pull clickhouse/clickhouse-server
-# docker run -d --name my-clickhouse-container --ulimit nofile=262144:262144 -p 8124:8123 -p 9001:9000 clickhouse/clickhouse-server
