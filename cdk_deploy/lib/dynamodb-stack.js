@@ -7,17 +7,10 @@ class DynamoDbStack extends Stack {
   constructor(scope, id, props) {
     super(scope, id, props);
 
-    // Import the existing VPC
-    const vpc = ec2.Vpc.fromVpcAttributes(this, 'ImportedVpc', {
-      vpcId: props.vpcId,
-      availabilityZones: props.availabilityZones,
-      publicSubnetIds: props.publicSubnetIds,
-      publicSubnetRouteTableIds: [Fn.importValue('MainPublicSubnetRouteTableId')],
-    });
-
     // Create the DynamoDB table
     const table = new dynamodb.Table(this, 'StreamTableMap', {
-      tableName: 'stream_table_map',
+      tableName: 'tables_streams',
+      // change this ^ to stream_table_map in production
       partitionKey: { name: 'stream_id', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'table_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PROVISIONED,
@@ -35,29 +28,31 @@ class DynamoDbStack extends Stack {
       writeCapacity: 1,
     });
 
-    // Create a VPC endpoint for DynamoDB
-    const dynamoDbEndpoint = new ec2.GatewayVpcEndpoint(this, 'DynamoDBEndpoint', {
-      vpc,
-      service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
-    });
+    // // Create a VPC endpoint for DynamoDB
+    // const dynamoDbEndpoint = new ec2.GatewayVpcEndpoint(this, 'DynamoDBEndpoint', {
+    //   vpc,
+    //   service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
+    // });
 
     // Create a policy statement for DynamoDB access
-    const dynamoDbAccessPolicy = new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      principals: [new iam.AnyPrincipal()], // This allows any principal within the VPC to access DynamoDB
-      actions: [
-        'dynamodb:PutItem',
-        'dynamodb:GetItem',
-        'dynamodb:UpdateItem',
-        'dynamodb:DeleteItem',
-        'dynamodb:Query',
-        'dynamodb:Scan'
-      ],
-      resources: [table.tableArn],
-    });
+    // const dynamoDbAccessPolicy = new iam.PolicyStatement({
+    //   effect: iam.Effect.ALLOW,
+    //   principals: [new iam.AnyPrincipal()], // This allows any principal within the VPC to access DynamoDB
+    //   // actions: [
+    //   //   'dynamodb:PutItem',
+    //   //   'dynamodb:GetItem',
+    //   //   'dynamodb:UpdateItem',
+    //   //   'dynamodb:DeleteItem',
+    //   //   'dynamodb:Query',
+    //   //   'dynamodb:Scan'
+    //   // ],
+    //   actions: ["dynamodb:*"],
+    //   //resources: [table.tableArn],
+    //   resources: "*",
+    // });
 
-    // Add the policy to the VPC endpoint
-    dynamoDbEndpoint.addToPolicy(dynamoDbAccessPolicy);
+    // // Add the policy to the VPC endpoint
+    // dynamoDbEndpoint.addToPolicy(dynamoDbAccessPolicy);
 
     // Output the table name and ARN
     new CfnOutput(this, 'TableName', {

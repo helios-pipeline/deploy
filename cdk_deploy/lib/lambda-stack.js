@@ -54,10 +54,13 @@ class LambdaStack extends Stack {
       code: lambda.Code.fromAsset('lambda_function.zip'),
       role: lambdaRole,
       vpc,
+      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      allowPublicSubnet: true,
       securityGroups: [lambdaSecurityGroup],
       timeout: Duration.seconds(300),
       environment: {
         CLICKHOUSE_HOST: ssm.StringParameter.valueForStringParameter(this, '/helios/clickhouse/ip'),
+        CLICKHOUSE_PORT: '8123',
       },
     });
 

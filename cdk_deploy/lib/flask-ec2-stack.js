@@ -40,15 +40,18 @@ class FlaskEc2Stack extends Stack {
     // Add policy for DynamoDB access
     role.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      actions: [
-        'dynamodb:PutItem',
-        'dynamodb:GetItem',
-        'dynamodb:UpdateItem',
-        'dynamodb:DeleteItem',
-        'dynamodb:Query',
-        'dynamodb:Scan'
-      ],
-      resources: ['arn:aws:dynamodb:*:*:table/stream_table_map'],
+      // actions: [
+      //   'dynamodb:PutItem',
+      //   'dynamodb:GetItem',
+      //   'dynamodb:UpdateItem',
+      //   'dynamodb:DeleteItem',
+      //   'dynamodb:Query',
+      //   'dynamodb:Scan'
+      // ],
+      actions: ["dynamodb:*"],
+      //resources: ['arn:aws:dynamodb:*:*:table/tables_streams'],
+      // note change ^ to stream_table_map for production
+      resources: "*"
     }));
 
     const ubuntuAmi = ec2.MachineImage.fromSsmParameter(

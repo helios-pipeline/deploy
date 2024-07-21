@@ -83,5 +83,3 @@ class ClickhouseEc2Stack extends Stack {
 }
 
 module.exports = { ClickhouseEc2Stack };
-
-An error occurred (AccessDeniedException) when calling the Query operation: User: arn:aws:iam::533266998695:user/helios is not authorized to perform: dynamodb:Query on resource: arn:aws:dynamodb:us-west-1:533266998695:table/tables_streams because no VPC endpoint policy allows the dynamodb:Query action
