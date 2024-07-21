@@ -146,3 +146,42 @@ resource "aws_lambda_layer_version" "layer_content" {
 # zip -r boto3_layer.zip ./boto3
 
 # zip -r lambda_function.zip lambda_function.py
+
+{
+    "message": "Request failed with status code 500",
+    "name": "AxiosError",
+    "stack": "AxiosError: Request failed with status code 500\n    at Wm (http://54.176.4.101:5000/assets/index-C6HJGnDe.js:77:1030)\n    at XMLHttpRequest.d (http://54.176.4.101:5000/assets/index-C6HJGnDe.js:77:5874)\n    at Bn.request (http://54.176.4.101:5000/assets/index-C6HJGnDe.js:79:1952)\n    at async Object.C_ [as inferSchema] (http://54.176.4.101:5000/assets/index-C6HJGnDe.js:80:63577)\n    at async k (http://54.176.4.101:5000/assets/index-C6HJGnDe.js:80:80554)",
+    "config": {
+        "transitional": {
+            "silentJSONParsing": true,
+            "forcedJSONParsing": true,
+            "clarifyTimeoutError": false
+        },
+        "adapter": [
+            "xhr",
+            "http",
+            "fetch"
+        ],
+        "transformRequest": [
+            null
+        ],
+        "transformResponse": [
+            null
+        ],
+        "timeout": 0,
+        "xsrfCookieName": "XSRF-TOKEN",
+        "xsrfHeaderName": "X-XSRF-TOKEN",
+        "maxContentLength": -1,
+        "maxBodyLength": -1,
+        "env": {},
+        "headers": {
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/json"
+        },
+        "method": "post",
+        "url": "/api/kinesis-sample",
+        "data": "{\"streamName\":\"Clickstream\"}"
+    },
+    "code": "ERR_BAD_RESPONSE",
+    "status": 500
+}
