@@ -5,6 +5,7 @@ const { ClickhouseEc2Stack } = require('../lib/clickhouse-ec2-stack');
 const { FlaskEc2Stack } = require('../lib/flask-ec2-stack');
 const { DynamoDbStack } = require('../lib/dynamodb-stack');
 const { LambdaStack } = require('../lib/lambda-stack');
+const { IamStack } = require('../lib/iam-stack');
 
 const app = new cdk.App();
 
@@ -12,6 +13,8 @@ const env = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: process.env.CDK_DEFAULT_REGION
 }
+
+const iamStack = new IamStack(app, 'IamStack', { env });
 
 const vpcStack = new VpcStack(app, 'VpcStack', { env });
 
@@ -43,6 +46,7 @@ const lambdaStack = new LambdaStack(app, 'LambdaStack', {
   publicSubnetIds: vpcStack.vpc.publicSubnets.map(subnet => subnet.subnetId),
 });
 
+vpcStack.addDependency(iamStack);
 clickhouseEc2Stack.addDependency(vpcStack);
 lambdaStack.addDependency(clickhouseEc2Stack);
 dynamoDbStack.addDependency(vpcStack);
