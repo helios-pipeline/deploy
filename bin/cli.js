@@ -15,7 +15,7 @@ async function setup() {
   await runDeploy(profile);
 }
 
-function main() {
+async function main() {
   const arg = process.argv[2];
   if (arg === undefined) {
     setup();
@@ -24,6 +24,9 @@ function main() {
     heliosArt();
     setup();
   } else if (arg === 'destroy') {
+    if (!profile) {
+      profile = await setProfile();
+    }
     runDestroy(profile);
   } else {
     console.log('Invalid argument.');
