@@ -17,7 +17,13 @@ trap 'error_handler ${LINENO} "$BASH_COMMAND" $?' ERR
 main() {
     echo "Starting Helios infrastructure setup..."
 
-    read -p "Enter the IAM profile name: " PROFILE
+    if [ -z "$1" ]; then
+      echo "Profile name is required as the first argument."
+      exit 1
+    fi
+
+    PROFILE=$1
+    # read -p "Enter the IAM profile name: " PROFILE
     echo "1-Using profile: $PROFILE"
     export AWS_PROFILE=$PROFILE
 
@@ -33,7 +39,7 @@ main() {
     bash ./assume_role.sh $PROFILE
     
     echo "Deploying all stacks..."
-    if cdk deploy --all --require-approval never; then
+    if cdk deploy VpcStack --require-approval never; then
         say "helios infrastructure setup done"
         echo "Deployment completed successfully!"
     else
@@ -43,4 +49,4 @@ main() {
     fi
 }
 
-main
+main "$@"
