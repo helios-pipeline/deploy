@@ -13,7 +13,8 @@ const ora = require ('ora');
 async function runDestroy(profile) {
   try {
     const spinner = ora('Destroying deployment...').start();
-    await exec(`cdk destroy --all --force`);
+    await exec(`cdk destroy --all --force --profile ${profile}`);
+    
     // console.log('CDK destroyed');
     spinner.succeed('CDK destroy complete').stop();
 

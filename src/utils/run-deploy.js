@@ -1,6 +1,6 @@
 const { promisify } = require('util');
-// const baseExec = require('child_process').exec;
-// const exec = promisify(baseExec);
+const baseExec = require('child_process').exec;
+const exec = promisify(baseExec);
 const { spawn } = require('child_process');
 const ora = require ('ora');
 
@@ -10,12 +10,19 @@ async function runDeploy(profile) {
   const spinner = ora('Initializing deployment...').start();
 
   // Spawn the CDK deploy process
-  const deployProcess = spawn('cdk', ['deploy', '--profile', profile, 'VpcStack', '--require-approval', 'never'], { stdio: ['pipe', 'pipe', 'pipe'] });
+  // const deployProcess = spawn('cdk', ['deploy', '--profile', profile, 'VpcStack', '--require-approval', 'never'], { stdio: ['pipe', 'pipe', 'pipe'] });
+  const deployProcess = spawn('sh', ['setup.sh', profile], { stdio: ['pipe', 'pipe', 'pipe'] });
 
   // Handle stdout
   deployProcess.stdout.on('data', (data) => {
-    console.log(data.toString()); // Print stdout data
+    const output = data.toString();
+    console.log(output); // Print stdout data
+
+    // if (output.includes('Enter the IAM profile name:')) {
+    //   deployProcess.stdin.write(`${profile}\n`); // Respond to the prompt
+    // }
   });
+  
 
   // Handle stderr
   deployProcess.stderr.on('data', (data) => {
@@ -39,7 +46,9 @@ async function runDeploy(profile) {
 // async function runDeploy(profile) {
 //   try {
 //     const spinner = ora('Initializing deployment...').start();
-//     await exec(`cdk deploy --profile ${profile} VpcStack --require-approval never`);
+//     // await exec(`cdk deploy --profile ${profile} VpcStack --require-approval never`);
+//     await exec(`sh setup.sh`);
+
 //     // console.log('CDK initialised');
 //     spinner.succeed('CDK initialization complete').stop()
 //   } catch (e) {

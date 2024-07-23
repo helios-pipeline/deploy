@@ -4,11 +4,14 @@ const { outputValidArguments } = require("../src/utils/valid-arguments");
 const { setProfile } = require("../src/utils/set-profile");
 const { runDeploy } = require("../src/utils/run-deploy");
 const { runDestroy } = require("../src/utils/run-destroy.js");
+const { heliosArt } = require("../src/ascii/heliosAscii.js");
 
- 
+
+let profile;
+
 async function setup() {
   // heliosArt();
-  const profile = await setProfile();
+  profile = await setProfile();
   await runDeploy(profile);
 }
 
@@ -18,9 +21,10 @@ function main() {
     setup();
     // outputValidArguments();
   } else if ( arg === 'deploy') {
+    heliosArt();
     setup();
   } else if (arg === 'destroy') {
-    runDestroy();
+    runDestroy(profile);
   } else {
     console.log('Invalid argument.');
     outputValidArguments();
