@@ -1,93 +1,196 @@
 import base64
 import json
-
 import logging
 import clickhouse_connect
 import os
 import boto3
+import re
 from boto3.dynamodb.conditions import Key
+import asyncio
 
 # Set up logging
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 # ClickHouse connection details
-CLICKHOUSE_HOST = os.environ['CLICKHOUSE_HOST']
-CLICKHOUSE_PORT = int(os.environ.get('CLICKHOUSE_PORT', 8123))
+CLICKHOUSE_HOST = os.environ["CLICKHOUSE_HOST"]
+CLICKHOUSE_PORT = int(os.environ.get("CLICKHOUSE_PORT", 8123))
 client = clickhouse_connect.get_client(host=CLICKHOUSE_HOST, port=CLICKHOUSE_PORT)
 
-def create_dynamodb_client():
-    return boto3.resource(
-        'dynamodb',
-        region_name='us-west-1'
-    )
+# Cache for DynamoDB client and table
+dynamodb_client = None
+dynamodb_table = None
 
-def get_table_id(dynamo_client, name, stream_id):
-    table = dynamo_client.Table(name)
-    response = table.query(
-        KeyConditionExpression=Key('stream_id').eq(stream_id)
-    )
+# Cache for table names
+table_name_cache = {}
+
+
+def get_dynamodb_table():
+    global dynamodb_client, dynamodb_table
+    if dynamodb_table is None:
+        dynamodb_client = boto3.resource("dynamodb", region_name="us-west-1")
+        dynamodb_table = dynamodb_client.Table("stream_table_map")
+    return dynamodb_table
+
+
+def get_table_id(stream_id):
+    table = get_dynamodb_table()
+    response = table.query(KeyConditionExpression=Key("stream_id").eq(stream_id))
     return response["Items"][0]["table_id"]
 
-def get_table_name(table_id):
-    res = client.query(f"""
-        SELECT name
-        FROM system.tables
-        WHERE database = 'default'
-        AND toString(uuid) = '{table_id}'
-        """)
-    return res.first_row[0]
-            
 
-def lambda_handler(event, context):
+def get_table_name(table_id):
+    if table_id not in table_name_cache:
+        res = client.query(
+            f"""
+            SELECT name
+            FROM system.tables
+            WHERE database = 'default'
+            AND toString(uuid) = '{table_id}'
+            """
+        )
+        table_name_cache[table_id] = res.first_row[0]
+    return table_name_cache[table_id]
+
+
+def identify_schema_mismatch(error_message):
+    error_patterns = {
+        "datetime_parse_error": r"Cannot parse .+ as DateTime: syntax error",
+        "uuid_error": r"Cannot parse uuid .+: Cannot parse UUID from String",
+        "int_parse_error": r"Cannot parse string .+ as Int32: syntax error",
+        "extra_column_error": r"Unrecognized column .+ in table",
+        "missing_column_error": r"No such column .+ in table",
+        "syntax_error": r"Cannot parse expression of type .+ here:",
+        "type_mismatch": r"Type mismatch in .+",
+    }
+
+    for error_type, pattern in error_patterns.items():
+        if re.search(pattern, error_message):
+            return error_type
+
+    return "unknown_error"
+
+
+def handle_insert_error(data, error, table_name):
+    error_message = str(error)
+    error_type = identify_schema_mismatch(error_message)
+
+    error_info = {
+        "error_type": error_type,
+        "error_message": error_message,
+        "raw_data": json.dumps(data),
+        "table_name": table_name,
+    }
+
+    send_to_quarantine(error_info)
+
+    logger.error(f"Error inserting data: {error_type}")
+    logger.error(f"Error message: {error_message}")
+    logger.error(f"Problematic data: {data}")
+
+
+def ensure_quarantine_table_exists(table_name):
+    try:
+        # Create quarantine database if it doesn't exist
+        client.command("CREATE DATABASE IF NOT EXISTS quarantine")
+
+        # Create the quarantine table with schema for error reporting
+        quarantine_table_structure = f"""
+        CREATE TABLE IF NOT EXISTS quarantine.{table_name} (
+            error_type String,
+            error_message String,
+            raw_data String,
+            original_table String,
+            insertion_timestamp DateTime DEFAULT now()
+        ) ENGINE = MergeTree()
+        ORDER BY (insertion_timestamp, error_type)
+        """
+
+        client.command(quarantine_table_structure)
+
+        logger.info(f"Quarantine table created/ensured: quarantine.{table_name}")
+    except Exception as e:
+        logger.error(f"Error ensuring quarantine table exists: {str(e)}", exc_info=True)
+        raise
+
+
+def send_to_quarantine(error_info):
+    table_name = error_info["table_name"]
+    ensure_quarantine_table_exists(table_name)
+
+    try:
+        logger.info(
+            f"Attempting to send data to quarantine table: quarantine.{table_name}"
+        )
+        quarantine_data = [
+            error_info["error_type"],
+            error_info["error_message"],
+            error_info["raw_data"],
+            table_name,
+        ]
+
+        client.insert(
+            f"quarantine.{table_name}",
+            [quarantine_data],
+            column_names=["error_type", "error_message", "raw_data", "original_table"],
+        )
+        logger.info(
+            f"Successfully sent data to quarantine table: quarantine.{table_name}"
+        )
+        logger.info(f"Quarantined data: {error_info}")
+    except Exception as e:
+        logger.error(f"Error sending data to quarantine: {str(e)}", exc_info=True)
+
+
+async def process_record(record, table_name):
+    logger.info(f"Processing record: {record['kinesis']['sequenceNumber']}")
+    logger.info(f"DECODED DATA: {record['kinesis']['data']}")
+
+    payload = base64.b64decode(record["kinesis"]["data"])
+    logger.info(f"Decoded payload: {payload}")
+
+    data = json.loads(payload)
+    logger.info(f"Parsed data: {json.dumps(data)}")
+
+    return data
+
+
+async def lambda_handler(event, context):
     logger.info(f"Lambda function invoked with event: {json.dumps(event)}")
     try:
-        records_processed = 0
-        for record in event['Records']:
-            logger.info(f"Processing record: {record['kinesis']['sequenceNumber']}")
-            logger.info(f"DECODED DATA: {record['kinesis']['data']}")
-            
-            # Kinesis data is base64 encoded
-            payload = base64.b64decode(record['kinesis']['data'])
-            logger.info(f"Decoded payload: {payload}")
-            
-            data = json.loads(payload)
-            logger.info(f"Parsed data: {json.dumps(data)}")
+        stream_id = event["Records"][0]["eventSourceARN"]
+        table_id = get_table_id(stream_id)
+        table_name = get_table_name(table_id)
 
-            dynamodb_client = create_dynamodb_client()
-            stream_id = record['eventSourceARN']
-            table_id = get_table_id(dynamodb_client, 'stream_table_map', stream_id)
-            table_name = get_table_name(table_id)
-            
-            # Process the data
-            insert_data_to_clickhouse(data, table_name) # might be [data]
-            records_processed += 1
-        
-        logger.info(f"Successfully processed {records_processed} records")
+        tasks = [process_record(record, table_name) for record in event["Records"]]
+        processed_data = await asyncio.gather(*tasks)
+
+        # Prepare data for batch insert
+        column_names = list(processed_data[0].keys())
+        rows = [list(data.values()) for data in processed_data]
+
+        try:
+            client.insert(table_name, rows, column_names=column_names)
+            logger.info(f"Successfully inserted {len(rows)} rows into {table_name}")
+        except Exception as e:
+            logger.error(f"Error in batch insert: {str(e)}")
+            for data in processed_data:
+                handle_insert_error(data, e, table_name)
+
+        logger.info(f"Successfully processed {len(processed_data)} records")
         return {
-            'statusCode': 200,
-            'body': json.dumps({'status': 'success', 'records_processed': records_processed})
+            "statusCode": 200,
+            "body": json.dumps(
+                {"status": "success", "records_processed": len(processed_data)}
+            ),
         }
     except Exception as e:
         logger.error(f"Error processing records: {str(e)}", exc_info=True)
         return {
-            'statusCode': 500,
-            'body': json.dumps({'status': 'error', 'message': str(e)})
+            "statusCode": 500,
+            "body": json.dumps({"status": "error", "message": str(e)}),
         }
 
-def insert_data_to_clickhouse(data, tableName):
-    logger.info(f"Data to client.insert: {data}")
-    
-    try:
-        column_names = list(data.keys())
-        rows = []
-        for keys, vals in data.items():
-            rows.append(vals)
-    
-    
-        res = client.insert(tableName, [rows], column_names=column_names)
-        #res = client.insert(tableName, [[rows[0]]], column_names=[column_names[0]])
-        logger.info(f"inserted response: {res}")
-    except Exception as e:
-        logger.error(f"Error during ClickHouse query execution: {str(e)}", exc_info=True)
-        raise
+
+def handler(event, context):
+    return asyncio.run(lambda_handler(event, context))
