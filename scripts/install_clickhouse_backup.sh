@@ -1,14 +1,17 @@
 #!/bin/bash
-apt-get update
-curl -LO "https://github.com/Altinity/clickhouse-backup/releases/download/v2.5.20/clickhouse-backup-linux-amd64.tar.gz"
-tar -zxvf clickhouse-backup-linux-amd64.tar.gz
-sudo mv build/linux/amd64/clickhouse-backup /usr/local/bin/
-rm clickhouse-backup-linux-amd64.tar.gz
+sudo apt-get update
+sudo curl -LO "https://github.com/Altinity/clickhouse-backup/releases/download/v2.5.20/clickhouse-backup-linux-amd64.tar.gz"
+sudo tar -zxvf clickhouse-backup-linux-amd64.tar.gz
+sudo mv build/linux/amd64/clickhouse-backup /usr/bin/
+sudo rm clickhouse-backup-linux-amd64.tar.gz
 sudo chmod +x /usr/bin/clickhouse-backup
 sudo mkdir -p /etc/clickhouse-backup/
 
+REGION=$(sudo curl -s http://169.254.169.254/latest/meta-data/placement/region)
+ACCOUNT=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | grep accountId | cut -d'"' -f4)
+
 # note that region is currently hardcoded to us-west-1
-cat << 'EOF' > /etc/clickhouse-backup/config.yaml
+sudo tee /etc/clickhouse-backup/config.yml << EOF
 general:
   remote_storage: s3
   max_file_size: 1073741824
@@ -50,9 +53,9 @@ clickhouse:
 s3:
   access_key: ""
   secret_key: ""
-  bucket: "clickhouse-backups"
+  bucket: "my-clickhouse-backups-${ACCOUNT}"
   endpoint: ""
-  region: ${REGION}
+  region: "${REGION}"
   acl: private
   assume_role_arn: ""
   force_path_style: false
@@ -71,4 +74,4 @@ s3:
   debug: false
 EOF
 
-echo "YAML file 'clickhouse-backup.yaml' has been created."
+echo "YAML file 'clickhouse-backup.yml' has been created."
