@@ -11,12 +11,17 @@ sudo apt-get update
 
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y clickhouse-server clickhouse-client
 
-# Configure ClickHouse to listen on all interfaces
-sudo sed -i 's/<listen_host>::1/<listen_host>::/' /etc/clickhouse-server/config.xml
-sudo sed -i 's/<listen_host>127.0.0.1/<listen_host>0.0.0.0/' /etc/clickhouse-server/config.xml
+sudo tee /etc/clickhouse-server/config.d/network.xml <<EOF
+<clickhouse>
+    <listen_host replace="replace">
+        <listen_host>0.0.0.0</listen_host>
+    </listen_host>
+</clickhouse>
+EOF
+
+sudo chown clickhouse:clickhouse /etc/clickhouse-server/config.d/network.xml
+sudo chmod 644 /etc/clickhouse-server/config.d/network.xml
 
 # Start ClickHouse and enable it to start on boot
 sudo systemctl start clickhouse-server
 sudo systemctl enable clickhouse-server
-
-sudo service clickhouse-server start

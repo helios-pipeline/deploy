@@ -33,7 +33,7 @@ main() {
     bash ./assume_role.sh $PROFILE
     
     echo "Deploying all stacks..."
-    if cdk deploy --all --require-approval never; then
+    if cdk deploy IamStack VpcStack ClickhouseEc2Stack FlaskEc2Stack --require-approval never; then
         say "helios infrastructure setup done"
         echo "Deployment completed successfully!"
     else
