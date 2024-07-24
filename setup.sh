@@ -45,6 +45,7 @@ main() {
     ./assume_role.sh "$PROFILE"
     
     echo "Deploying all stacks..."
+
     if cdk deploy --all --require-approval never; then
         which say >/dev/null 2>&1 && say "helios infrastructure setup done"
         echo "Deployment completed successfully!"
