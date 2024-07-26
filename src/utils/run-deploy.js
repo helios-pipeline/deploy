@@ -20,6 +20,7 @@ async function runDeploy(profile) {
   let currentStep = null;
   let buffer = "";
   let lastPrintedMessages = {};
+  let flaskIpAddress = null;
 
   const updateSpinner = (stepName, text, isError = false) => {
     let step = steps.find((s) => s.name === stepName);
@@ -64,6 +65,14 @@ async function runDeploy(profile) {
       let isError = false;
 
       line = line.replace(/\s+/g, " ").trim();
+
+      const flaskIpMatch = line.match(
+        /FlaskEc2Stack\.FlaskInstancePublicIp\s*=\s*(\d+\.\d+\.\d+\.\d+)/,
+      );
+      if (flaskIpMatch) {
+        flaskIpAddress = flaskIpMatch[1];
+        return;
+      }
 
       const updateSpinnerAndHandle = (stepName, text, isComplete = false) => {
         updateSpinner(stepName, isComplete ? `${stepName} deployed` : text);
@@ -195,6 +204,13 @@ async function runDeploy(profile) {
             "Helios infrastructure setup completed successfully",
           ),
         );
+        if (flaskIpAddress) {
+          console.log(
+            chalk.bold.blue(
+              `You can access your Flask application at: http://${flaskIpAddress}:5000`,
+            ),
+          );
+        }
         resolve();
       } else {
         console.error(chalk.bold.red(`Deployment failed with code ${code}`));
