@@ -4,7 +4,7 @@
   "bin": {
     "cdk_deploy": "bin/cdk_deploy.js",
     "helios": "bin/cli.js"
-  }, 
+  },
   "scripts": {
     "build": "echo \"The build step is not required when using JavaScript!\" && exit 0",
     "cdk": "cdk",
@@ -20,6 +20,7 @@
     "aws-cdk-lib": "^2.149.0",
     "cdk-ec2-key-pair": "^4.0.1",
     "constructs": "^10.0.0",
+    "dotenv": "^16.4.5",
     "ora": "5.4.1"
   }
 }

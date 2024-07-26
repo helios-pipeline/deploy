@@ -34,16 +34,16 @@ main() {
         echo "setup_cdk.sh or assume_role.sh not found in the current directory."
         exit 1
     fi
-    
+
     echo "Running setup_cdk.sh..."
-    ./setup_cdk.sh "$PROFILE"
-    
+    bash ./setup_cdk.sh "$PROFILE"
+
     echo "Deploying IamStack..."
     cdk deploy IamStack --require-approval never
-    
+
     echo "Assuming deployment role..."
-    ./assume_role.sh "$PROFILE"
-    
+    bash ./assume_role.sh "$PROFILE"
+
     echo "Deploying all stacks..."
 
     if cdk deploy --all --require-approval never; then
