@@ -8,7 +8,6 @@ if [ $# -eq 0 ]; then
 fi
 
 PROFILE=$1
-echo "2-Using profile: $PROFILE"
 export AWS_PROFILE=$PROFILE
 
 command_exists () {

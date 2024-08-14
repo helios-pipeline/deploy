@@ -22,6 +22,5 @@ EOF
 sudo chown clickhouse:clickhouse /etc/clickhouse-server/config.d/network.xml
 sudo chmod 644 /etc/clickhouse-server/config.d/network.xml
 
-# Start ClickHouse and enable it to start on boot
 sudo systemctl start clickhouse-server
 sudo systemctl enable clickhouse-server

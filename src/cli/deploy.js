@@ -15,7 +15,7 @@ const steps = [
   // if add more stacks to CDK, add them here
 ];
 
-async function runDeploy(profile) {
+async function deploy(profile) {
   let currentSpinner = null;
   let currentStep = null;
   let buffer = "";
@@ -182,7 +182,7 @@ async function runDeploy(profile) {
     }
   };
 
-  const deployProcess = spawn("sh", ["setup.sh", profile], {
+  const deployProcess = spawn("sh", ["./scripts/setup.sh", profile], {
     stdio: ["pipe", "pipe", "pipe"],
     shell: true,
   });
@@ -223,4 +223,4 @@ async function runDeploy(profile) {
   });
 }
 
-module.exports = { runDeploy };
+module.exports = { deploy };

@@ -1,5 +1,5 @@
 {
-  "app": "node bin/cdk_deploy.js",
+  "app": "node bin/helios.js",
   "watch": {
     "include": [
       "**"

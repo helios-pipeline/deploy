@@ -17,7 +17,6 @@ if [ -z "$ROLE_ARN" ]; then
     exit 1
 fi
 
-# Assume the role and get temporary credentials
 CREDENTIALS=$(aws sts assume-role --role-arn $ROLE_ARN --role-session-name DeploymentSession --output text --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]')
 
 if [ $? -ne 0 ]; then
@@ -25,10 +24,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Read the credentials into an array
 IFS=$'\t' read -r -a cred_array <<< "$CREDENTIALS"
 
-# Export the credentials as environment variables
 export AWS_ACCESS_KEY_ID="${cred_array[0]}"
 export AWS_SECRET_ACCESS_KEY="${cred_array[1]}"
 export AWS_SESSION_TOKEN="${cred_array[2]}"

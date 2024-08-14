@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -e
-#set -x # testing
 
 error_handler() {
     local line=$1
@@ -25,24 +24,23 @@ main() {
     fi
 
     PROFILE="$1"
-    echo "1-Using profile: $PROFILE"
     export AWS_PROFILE="$PROFILE"
 
-    if [ -f setup_cdk.sh ] && [ -f assume_role.sh ]; then
-        chmod +x setup_cdk.sh assume_role.sh
+    if [ -f scripts/setup_cdk.sh ] && [ -f scripts/assume_role.sh ]; then
+        chmod +x scripts/setup_cdk.sh scripts/assume_role.sh
     else
         echo "setup_cdk.sh or assume_role.sh not found in the current directory."
         exit 1
     fi
 
     echo "Running setup_cdk.sh..."
-    bash ./setup_cdk.sh "$PROFILE"
+    bash ./scripts/setup_cdk.sh "$PROFILE"
 
     echo "Deploying IamStack..."
     cdk deploy IamStack --require-approval never
 
     echo "Assuming deployment role..."
-    bash ./assume_role.sh "$PROFILE"
+    bash ./scripts/assume_role.sh "$PROFILE"
 
     echo "Deploying all stacks..."
 

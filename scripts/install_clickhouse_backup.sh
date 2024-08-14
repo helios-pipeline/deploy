@@ -10,7 +10,6 @@ sudo mkdir -p /etc/clickhouse-backup/
 REGION=$(sudo curl -s http://169.254.169.254/latest/meta-data/placement/region)
 ACCOUNT=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | grep accountId | cut -d'"' -f4)
 
-# note that region is currently hardcoded to us-west-1
 sudo tee /etc/clickhouse-backup/config.yml << EOF
 general:
   remote_storage: s3
