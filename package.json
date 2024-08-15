@@ -2,7 +2,7 @@
   "name": "cdk_deploy",
   "version": "0.1.0",
   "bin": {
-    "cdk_deploy": "bin/cdk_deploy.js",
+    "cdk_deploy": "bin/helios.js",
     "helios": "bin/cli.js"
   },
   "scripts": {

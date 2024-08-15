@@ -7,7 +7,7 @@ function heliosArt() {
 
     for (const line of lines) {
         if (line.trim().startsWith('<pre') || line.trim() === '</pre>') {
-            continue; // Skip the opening and closing <pre> tags
+            continue;
         }
 
         let lineOutput = '';
@@ -16,10 +16,8 @@ function heliosArt() {
         for (const match of matches) {
             const [, color, text] = match;
             if (color.toLowerCase() === '#000000') {
-                // Replace default color (black) with spaces
                 lineOutput += ' '.repeat(text.length);
             } else {
-                // Keep colored digits
                 lineOutput += chalk.hex(color)(text);
             }
         }
@@ -32,7 +30,6 @@ function heliosArt() {
     return output;
   }
 
-  // Usage example:
   const htmlInput = `<pre id="tiresult" style="font-size: 9px; background-color: #000000; font-weight: bold; padding: 4px 5px; --fs: 9px;"><b style="color:#000000">11110010101010101000011000111111101100110101110110101100011101011001100110001101001000011011010001011101101101</b>
 <b style="color:#000000">00100111011010101110001011011011110011011010110001110111011011111101100001110000101001111001011101000000000010</b>
 <b style="color:#000000">10011100001111110000001010100101010011001100011001000010001000001110101111011101011000011010010000001111011100</b>
@@ -100,11 +97,7 @@ function heliosArt() {
   #+#    #+# #+#        #+#            #+#    #+#    #+# #+#    #+#     
   ###    ### ########## ########## ########### ########   ########       
   `
-  // Assume the 'art' variable is already defined
 
-  // Assume the 'art' variable is already defined
-
-  // Existing code (unchanged)
   function rgbToAnsi(r, g, b) {
   return `\x1b[38;2;${r};${g};${b}m`;
   }
@@ -131,14 +124,10 @@ function heliosArt() {
   [[255, 140, 0], [255, 215, 0]],    // Dark Orange to Gold
   ];
 
-  // New diagonal gradient application
-  console.log('\x1b[0m\n\n');
   gradients.forEach(([startColor, endColor], index) => {
   console.log(consoleOutput)
   console.log(applyDiagonalGradient(art, startColor, endColor));
   });
-
-
 }
 
 module.exports = { heliosArt }
