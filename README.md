@@ -1,32 +1,69 @@
-# deploy
+# Helios Infrastructure Deployment and CLI
 
-## async inserts
-- recommended best practice for ClickHouse
-- https://clickhouse.com/docs/en/cloud/bestpractices/asynchronous-inserts
-- multiple options available, choosing to not handle as a setting specific to each individual INSERT via Lambda function invocation, but rather as a Database user setting
-  - not -- `INSERT INTO YourTable SETTINGS async_insert=1, wait_for_async_insert=1 VALUES (...)`
-  - instead -- `ALTER USER default SETTINGS async_insert = 1`
-- re ^, for our CLI prompts, can choose to either ask a user to provide a username and password for the ClickHouse DB, or just only allow a "default" user to be set up
-  - either way, once we create a ClickHouse DB instance on the EC2 for the user, can run the `ALTER USER default SETTINGS async_insert = 1` command while in the `./clickhouse-client` on this EC2
+[![ora](https://img.shields.io/npm/v/ora.svg)](https://www.npmjs.com/package/ora)
+[![Version](https://img.shields.io/npm/v/helios-cli.svg)](https://www.npmjs.com/package/helios-cli)
 
-## lambda function notes
-option 1 - dynamoDB
-get streamID from event - within the lambda_handler
-connect to dynamoDB to get tableID for this streamID
-tableID = table.__uuid__
-{ streamID: tableID }
-send a query to ch client to get tableName based on table.__uuid__
-client.insert(tableName, data)
+This repository contains the automated deployment process for Helios, an open-source platform designed to simplify the visualization and analysis of real-time event streams. Helios exposes data from Amazon Kinesis streams for SQL querying, allowing teams to gain insights from their existing event streams through an intuitive interface.
 
-re testing this lambda function before abstracting code to terraform:
-- setup env variable in the lambda configuration to hardcore a specific EC2 instance public url
-- do the same with a dynamoDB table
-  - add an item that has a real kinesis_stream_id and real table __uuid__ to this table
+![Helios Architecture](images/helios-architecture.png)
 
-option 2 - clickhouse table
+## Infrastructure Overview
 
-questions:
-- how to handle lambda to/from dynamo errors?
-- similarly, with our try/catch in the lambda... what actually happens if theres an error?
-- how to handle timestamps and converting those to comparable format 
-event_timestamp = datetime.fromisoformat(record['event_timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+Helios deploys the following key components:
+
+- ClickHouse database on EC2
+- Flask web application on EC2
+- Lambda function for Kinesis stream processing
+- DynamoDB table for stream-to-table mapping
+- S3 bucket for ClickHouse backups
+- VPC and security groups
+
+## Deployment and Management
+
+Helios provides a Command-Line Interface (CLI) that streamlines the deployment, configuration, and management of Helios infrastructure on AWS. This interface leverages the AWS Cloud Development Kit (CDK) to manage infrastructure as code. This allows for consistent, repeatable deployments and easy management of complex AWS resources.
+
+### Prerequisites
+
+- An AWS account
+- [AWS CLI installed and configured](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) with the appropriate credentials and region
+- Node.js and npm installed
+
+### Installation
+
+Install the Helios CLI globally:
+
+```
+npm install -g helios-cli
+```
+
+### Deploying Helios
+
+To deploy Helios infrastructure, run:
+
+```
+helios deploy
+```
+
+This command will guide you through the following steps:
+
+1. You will be prompted to enter your AWS Profile name. This should correspond to a profile in your AWS credentials file.
+2. You will have the option to enter a ChatGPT API key. This is optional, but if provided, it enables AI-powered error analysis for data in quarantine tables. When data fails to insert into the main ClickHouse tables due to schema mismatches or other errors, it's stored in quarantine tables.
+3. The CLI will then use the AWS CDK to deploy all necessary Helios infrastructure to your AWS account.
+4. You'll see a progress indicator while the deployment is in progress.
+5. Upon successful deployment, you'll receive the URL where you can access the Helios web interface.
+
+### Destroying Helios Infrastructure
+
+To tear down the Helios infrastructure, run:
+
+```
+helios destroy
+```
+
+This command will:
+
+1. Use the AWS CDK to destroy all Helios-related resources in your AWS account.
+2. You'll see a progress indicator during the destruction process.
+3. Upon completion, you'll receive a confirmation message.
+
+**Note**: Destroying the infrastructure will remove all related resources and data. This action cannot be undone, so please use with caution.
