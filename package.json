@@ -1,6 +1,6 @@
 {
   "name": "try-helios",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "CLI for managing Helios infrastructure",
   "main": "src/cli/index.js",
   "bin": {
