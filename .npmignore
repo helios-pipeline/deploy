@@ -1,3 +1,58 @@
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+# Development and build files
+node_modules/
+cdk.out/
+cdk_deploy/
+.git/
+.github/
+.gitignore
+.eslintrc*
+jest.config.js
+test/
+
+# CDK-specific files
+cdk.json
+cdk.context.json
+cdk_policy.json
+
+# Documentation and misc
+*.md
+!README.md
+deployment.md
+
+# Python-related files (if not needed in the package)
+*.pyc
+__pycache__/
+requirements.txt
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# AWS Lambda deployment packages (if not needed in the npm package)
+lambda/*.zip
+layers/*.zip
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# IDE-specific files
+.vscode/
+.idea/
+*.sublime-*
+
+# Build output
+dist/
+build/

@@ -8,4 +8,5 @@ cdk.context.json
 cdk.out/
 .cdk.staging
 package-lock.json
-
+.DS_Store
+**/.DS_Store

@@ -1,24 +1,38 @@
 {
-  "name": "cdk_deploy",
-  "version": "0.1.0",
+  "name": "try-helios",
+  "version": "0.1.1",
+  "description": "CLI for managing Helios infrastructure",
+  "main": "src/cli/index.js",
   "bin": {
-    "cdk_deploy": "bin/helios.js",
-    "helios": "bin/cli.js"
+    "helios": "./bin/cli.js"
   },
   "scripts": {
-    "build": "echo \"The build step is not required when using JavaScript!\" && exit 0",
-    "cdk": "cdk",
-    "test": "jest"
+    "test": "jest",
+    "start": "node bin/cli.js"
   },
+  "keywords": [
+    "helios",
+    "cli",
+    "infrastructure",
+    "aws",
+    "cloud",
+    "deployment"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/helios-pipeline/deploy.git"
+  },
+  "homepage": "https://github.com/helios-pipeline/deploy",
   "devDependencies": {
     "aws-cdk": "2.149.0",
     "jest": "^29.7.0"
   },
   "dependencies": {
-    "@aws-cdk/aws-secretsmanager": "^1.204.0",
     "@inquirer/prompts": "^5.3.2",
     "aws-cdk-lib": "^2.149.0",
     "cdk-ec2-key-pair": "^4.0.1",
+    "commander": "^12.1.0",
     "constructs": "^10.0.0",
     "dotenv": "^16.4.5",
     "ora": "5.4.1"
