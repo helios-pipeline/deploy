@@ -1,4 +1,4 @@
-# Helios Infrastructure Deployment and CLI
+## Overview
 
 [![ora](https://img.shields.io/npm/v/ora.svg)](https://www.npmjs.com/package/ora)
 [![Version](https://img.shields.io/npm/v/helios-cli.svg)](https://www.npmjs.com/package/helios-cli)
