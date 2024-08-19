@@ -1,26 +1,24 @@
-const process = require("process");
-const readline = require("readline/promises");
-const path = require("path");
-const fs = require("fs/promises");
-const { outputValidArguments } = require("../utils/valid-arguments");
-const { setProfile } = require("./set-profile");
-const { deploy } = require("./deploy");
-const { destroy } = require("./destroy.js");
-const { heliosArt } = require("../ascii/heliosAscii.js");
-const { input, confirm } = require("@inquirer/prompts");
+const { program } = require('commander');
+const path = require('path');
+const fs = require('fs').promises;
+const { setProfile } = require('./set-profile');
+const { deploy } = require('./deploy');
+const { destroy } = require('./destroy');
+const { heliosArt } = require('../ascii/heliosAscii');
+const { input, confirm } = require('@inquirer/prompts');
 
 async function getChatGPTApiKey() {
   const wantApiKey = await confirm({
-    message: "Would you like to provide a ChatGPT API key?",
+    message: 'Would you like to provide a ChatGPT API key?',
   });
 
   if (wantApiKey) {
     const apiKey = await input({
-      message: "Please enter your ChatGPT API key:",
+      message: 'Please enter your ChatGPT API key:',
     });
-    console.log(apiKey);
+    console.log('API Key received');
 
-    const envPath = path.resolve(process.cwd(), ".env");
+    const envPath = path.resolve(process.cwd(), '.env');
     await fs.appendFile(envPath, `\nchatGptApiKey=${apiKey}`);
     return apiKey;
   } else {
@@ -28,30 +26,44 @@ async function getChatGPTApiKey() {
   }
 }
 
-let profile;
-
 async function setup() {
-  profile = await setProfile();
+  const profile = await setProfile();
   await getChatGPTApiKey();
   await deploy(profile);
 }
 
-async function main() {
-  const arg = process.argv[2];
-  if (arg === undefined) {
+function main() {
+  program
+    .version('0.1.0')
+    .description('Helios CLI for managing Helios infrastructure');
+
+  program
+    .command('deploy')
+    .description('Deploy Helios infrastructure')
+    .action(() => {
+      heliosArt();
+      setup();
+    });
+
+  program
+    .command('destroy')
+    .description('Destroy Helios infrastructure')
+    .action(async () => {
+      const profile = await setProfile();
+      await destroy(profile);
+    });
+
+  program
+    .command('setup')
+    .description('Set up Helios configuration')
+    .action(setup);
+
+  program.parse(process.argv);
+
+  // If no arguments, run setup
+  if (!process.argv.slice(2).length) {
     setup();
-  } else if (arg === "deploy") {
-    heliosArt();
-    setup();
-  } else if (arg === "destroy") {
-    if (!profile) {
-      profile = await setProfile();
-    }
-    destroy(profile);
-  } else {
-    console.log("Invalid argument.");
-    outputValidArguments();
   }
 }
 
-exports.main = main;
+module.exports = { main };

@@ -1,7 +1,7 @@
 # Helios Infrastructure Deployment and CLI
 
 [![ora](https://img.shields.io/npm/v/ora.svg)](https://www.npmjs.com/package/ora)
-[![Version](https://img.shields.io/npm/v/helios-cli.svg)](https://www.npmjs.com/package/helios-cli)
+[![Version](https://img.shields.io/npm/v/try-helios.svg)](https://www.npmjs.com/package/try-helios)
 
 This repository contains the automated deployment process for Helios, an open-source platform designed to simplify the visualization and analysis of real-time event streams. Helios exposes data from Amazon Kinesis streams for SQL querying, allowing teams to gain insights from their existing event streams through an intuitive interface.
 
@@ -33,7 +33,7 @@ Helios provides a Command-Line Interface (CLI) that streamlines the deployment, 
 Install the Helios CLI globally:
 
 ```
-npm install -g helios-cli
+npm install -g try-helios
 ```
 
 ### Deploying Helios
