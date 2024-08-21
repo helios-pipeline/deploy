@@ -5,7 +5,12 @@
 
 This repository contains the automated deployment process for Helios, an open-source platform designed to simplify the visualization and analysis of real-time event streams. Helios exposes data from Amazon Kinesis streams for SQL querying, allowing teams to gain insights from their existing event streams through an intuitive interface.
 
-![Helios Architecture](images/helios-architecture.png)
+<p align="center">
+  <img 
+    src="https://github.com/helios-platform/helios-platform.github.io/blob/main/docs/public/case_study/full_full_color.png"
+    alt="helios_infra"
+  >
+</p>
 
 ## Infrastructure Overview
 
